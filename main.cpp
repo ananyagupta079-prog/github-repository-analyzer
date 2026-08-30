@@ -1,6 +1,5 @@
 #include<iostream>
 #include<vector>
-#include<curl/curl.h>
 #include"json.hpp"
 #include<string>
 #include<algorithm>
@@ -12,8 +11,31 @@ struct repository{
     vector<string>topics;
     int stars;
     int score;
+    string structure;
+    vector<string>folders;
+    vector<string>files;
 };
 int main(){
+    string repoURL;
+    cout<<"enter GitHub Repository URL";
+    cin>>repoURL;
+    cout<<"you entered"<<repoURL<<endl;
+    size_t pos=repoURL.find("github.com/");
+    string path=repoURL.substr(pos+11);
+    size_t slash=path.find("/");
+    string username=path.substr(0,slash);
+    string repositoryName=path.substr(slash+1);
+    if(!repositoryName.empty() && repositoryName.back()=='/'){
+        repositoryName.pop_back();
+    }
+    cout<<"username="<<username<<endl;
+    cout<<"repositoryName="<<repositoryName<<endl;
+    string apiURL="https://api.github.com/repos/"+username+"/"+repositoryName+"/contents";
+    //system(("curl.exe"+apiURL+"> contents.json").c_str());
+    cout<<"API URL:"<<apiURL<<endl;
+    string command="\"C:\\Windows\\System32\\curl.exe\""+apiURL+"> contents.json";
+    cout<<command<<endl;
+    //system(("cmd/c"+command).c_str());
     string target;
     int n;
     cout<<"enter number of repositories";
@@ -71,6 +93,35 @@ int main(){
                 repo[i].score+=2;
                 break;
             }
+            int foldercount=repo[i].folders.size();
+            int filecount=repo[i].files.size();
+            string structure;
+            if(filecount==0){
+                structure="Empty";
+            }
+            else if(filecount<=5){
+                structure="Small";
+            }
+            else if(filecount<=20){
+                structure="Medium";
+            }
+            else{
+                structure="Large";
+            }
+            for(string folder:repo[i].folders){
+                if(folder=="src"){
+                    repo[i].score+=2;
+                }
+                if(folder=="include"){
+                    repo[i].score+=1;
+                }
+                if(folder=="tests"){
+                    repo[i].score+=2;
+                }
+                if(folder=="docs"){
+                    repo[i].score+=1;
+                }
+            }
         }
     }
     sort(repo.begin(),repo.end(),[](repository a,repository b){
@@ -78,7 +129,8 @@ int main(){
             });
             cout<<"repository ranking";
             for(int i=0;i<repo.size();i++){
-                cout<<"rank"<<i+1<<":"<<repo[i].name<<"| score:"<<repo[i].score<<endl;
+                cout<<"rank"<<i+1<<":"<<repo[i].name<<"| score:"<<repo[i].score<<" | Files: "<<repo[i].files.size()
+                <<" | Folders: "<<repo[i].folders.size()<<" | Structure: "<<repo[i].structure<<endl;
             }
 
 }
